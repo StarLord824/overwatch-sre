@@ -1,0 +1,291 @@
+Go through this hackathon website
+
+https://www.wemakedevs.org/hackathons/signoz
+
+"Agents of SigNoz" is live right now (July 20 – July 26, 2026). It's a $20,000 hackathon hosted by WeMakeDevs in partnership with SigNoz, centered around open-source, OpenTelemetry-native observability and bringing debuggability to AI agents and complex distributed systems.
+
+Here is the breakdown of what you need to know:
+
+🎯 The Core Mission
+The core challenge is building agent-native observability workflows, SRE copilots, and AI/LLM observability dashboards. The premise is simple: AI agents are chaining LLM calls, invoking tools, and making autonomous decisions, but when things break, developers are usually flying blind. The goal is to use SigNoz to trace agent steps, monitor token costs, and correlate LLM responses with downstream failures.
+
+🏆 The Tracks & Prizes
+Every member of a winning team gets the full hardware prize (or equivalent cash):
+
+Track 01 · AI & Agent Observability: Trace, monitor, and debug AI-native systems, self-hosted inference (vLLM), or SRE sidekicks using SigNoz MCP.
+
+Prize: Apple MacBook Air
+
+Track 02 · Signals & Dashboards: OpenTelemetry auto-instrumentation, custom OTel libraries, and Query Builder mastery.
+
+Prize: Apple iPad Air
+
+Track 03 · Build Your Own: Observe anything else—bots, IoT fleets, trading engines, or custom data source bridges into SigNoz.
+
+Prize: Apple iPhone Air
+
+Extra Perks: Top-performing blog posts earn direct job interviews at SigNoz, and the top 10 social media posts win exclusive swag.
+
+⚖️ What the Judges Look For
+Submissions are evaluated on six main pillars: Potential Impact, Creativity & Innovation, Technical Excellence, Best Use of SigNoz (deep integration of traces, metrics, logs, and alerts), User Experience, and Presentation Quality.
+
+here is all organizer provided data, in one place. first let's deeply analyze and discuss on top of these, and the trajectory we should pick
+
+I. Deconstructing the Organizer's Playbook
+The ideas provided by the organizers fall into three distinct architectural buckets:
+
+The "Meta" Observability Layer (SRE Sidekick, MCP, Slackbot): This track is about AI consuming observability data. You can build an agent, such as an SRE Sidekick, that uses SigNoz as its brain to debug production issues over a call. The SigNoz MCP Server allows AI to query metrics, traces, and logs using natural language.  
+MD
++ 1
+
+The Pure Tracing Layer (E2E Agents, n8n, LLM Cost Tracer): This track focuses on generating and visualizing data. It involves instrumenting pipelines—like n8n workflows or standard agents—so that end-to-end executions and per-model costs are mapped out.  
+MD
++ 1
+
+The DevOps & Automation Layer (vLLM, Deploy Guardian, Self-Healing Infra): This track targets deep infrastructure. It explores monitoring metrics like GPU queue depth or CI/CD markers, and taking autonomous action, such as scaling up via KEDA or triggering rollbacks, when an anomaly hits.  
+MD
++ 1
+
+II. The Strategic Trajectory
+With the hackathon wrapping up on July 26th, time is critical. We need maximum visual impact with an architecture that can be spun up rapidly.
+
+We should discard the deep DevOps ideas like vLLM observability or KEDA autoscaling. Setting up the infrastructure for those will eat up most of the remaining time, leaving a rushed demo. We should also skip n8n workflows, as a visual drag-and-drop tool won't properly showcase full-stack coding capabilities.  
+MD
++ 1
+
+The Winning Path: "The SRE Sidekick Command Center"
+
+The strongest move is to combine the concepts of the SRE Sidekick with SigNoz MCP and the LLM Cost Tracer into one unified, full-stack application.  
+MD
+
+Here is how this hybrid architecture breaks down:
+
+The Backend Core: You can build a Node.js or Python agent that acts as the SRE sidekick. It can connect directly to the SigNoz MCP server, giving it the ability to natively pull traces, logs, and infrastructure metrics.  
+MD
+
+The Frontend Experience: You can build a sleek "Mission Control" UI using Next.js and Tailwind CSS. The interface could feature a real-time chat (potentially powered by WebSockets) where you interact with the SRE sidekick to debug issues. Alongside the chat, you can visualize a per-prompt or per-user cost dashboard.  
+MD
++ 1
+
+The "Wow" Factor: Instead of just showing standard SigNoz screens, you are showing a custom, AI-driven dashboard that actively interacts with SigNoz in real-time. It proves a deep understanding of OpenTelemetry, agent workflows, and full-stack UX.
+
+Does this "Mission Control" architecture sound like the right level of complexity to tackle before the deadline, or would you rather pivot strictly to an automated Python CLI tool?
+
+does this already built open source project https://www.opensre.com/, falls into this same track's demands?
+
+Yes, OpenSRE is virtually a blueprint for Track 1. It perfectly embodies the exact problem this hackathon is trying to solve.
+
+Here is exactly how the architecture of OpenSRE maps to the hackathon's demands, and how you can leverage its concepts:
+
+1. The Perfect "SRE Sidekick" Match
+OpenSRE is designed as an autonomous AI agent that investigates production incidents by querying logs, metrics, and traces across an observability stack. This is the exact definition of the "SRE Sidekick with SigNoz MCP" example build.  
+MD
+
+2. Multi-Agent Orchestration
+OpenSRE uses LangGraph to break investigations down into parallel tasks—dispatching a planner agent, a metrics-agent, and a log-agent simultaneously. Track 1 explicitly highlights projects that "Build Agents and setup E2E observability with SigNoz". You could instrument this type of multi-agent LangGraph workflow using OpenTelemetry to visualize the agent's entire thought process inside the SigNoz dashboard.  
+MD
+
+3. The Python Architecture Advantage
+OpenSRE's core logic is heavily Python-based, utilizing various LLM integrations and tool-calling loops. Building a modular, AI-integrated Python command-line tool that acts as a local SRE Sidekick is a highly effective way to execute this. You can route the agent's tool calls directly through the SigNoz MCP to query traces and anomalies.
+
+The Hackathon Strategy
+Because OpenSRE is an existing open-source project, you cannot simply submit it or a fork of it as your own original work. However, you can use it as the ultimate reference architecture.
+
+To stand out to the judges, your project must showcase SigNoz as the absolute core engine. You could build a streamlined, custom version of an AI SRE Sidekick that exclusively uses the SigNoz MCP server to fetch context and diagnose production issues over a call.  
+MD
+
+Are you leaning towards building a visual web dashboard for this sidekick, or a terminal-based CLI interface?
+
+let's map out opensre first (reverse engineered)
+
+1. starting from its relation and setup with the APMs and MCPs
+
+2. then what and how it does
+
+3. the needs and benefits of those
+
+
+
+note: update the flow as much as you like for maximum value, but this should be ultimate. we need to build at such scale that none of competing submissions reach there
+
+Here is a deep architectural teardown of OpenSRE, mapped directly to how it leverages APMs and MCPs. This is the blueprint for building a production-grade, autonomous SRE Sidekick.
+
+1. The Setup: Bridging APMs, MCPs, and the Agent Engine
+OpenSRE acts as the intelligent orchestration layer sitting between your infrastructure and your LLMs, avoiding the "black box" trap by keeping data access strictly modular.
+
+The APM (Application Performance Monitoring) Layer: APMs like SigNoz, Datadog, or Elastic act as the ground truth. They use agents embedded in your codebase to collect telemetry at runtime—traces, metrics, and logs. OpenSRE does not generate this data; it queries it. When an alert fires, the APM is the starting line.
+
+The MCP (Model Context Protocol) Bridge: MCP standardizes how AI models connect to these external data sources. It uses a client-host-server architecture where the "Server" exposes specific tools (like a Prometheus query or a SigNoz trace fetcher), and the "Client" maintains a stateful session to route these capabilities to the AI model securely.
+
+The AI Engine: OpenSRE connects to over 60 tools and integrations by natively understanding how to fetch from these sources. By plugging an MCP server into OpenSRE, the agent can dynamically discover which observability tools are available and call them without hardcoded scripts.
+
+2. How OpenSRE Investigates: The Multi-Agent Pipeline
+OpenSRE does not just pass an error log to an LLM and ask for a guess. It uses LangGraph to orchestrate a structured, six-stage investigation pipeline.
+
+Ingestion & Alert Extraction: The process begins the moment a webhook from an APM alert triggers the system. The gateway extracts the alert context and masks any sensitive identifiers before external LLM calls.
+
+Hypothesis Planning: A "planner" agent analyzes the initial alert and formulates a set of plausible hypotheses.
+
+Parallel Execution (The ReAct Loop): The planner dispatches specialized sub-agents simultaneously—for example, a k8s-agent checking pod health, a log-agent pulling Elasticsearch/SigNoz logs, and a metrics-agent querying Prometheus. They execute these queries in a continuous tool-calling loop.
+
+Episodic Memory & Topology Recall: Before jumping to conclusions, OpenSRE queries a Neo4j knowledge graph to map service dependencies and calculate the blast radius. It also uses weighted similarity scoring to recall metadata from past incident resolutions (its "episodic memory") to see if this has happened before.
+
+Diagnosis: The sub-agents synthesize their findings. The system forces the agents to link every conclusion to specific queried evidence.
+
+Delivery: A final structured report—containing the root cause, confidence score, linked evidence, and remediation steps—is delivered back to the engineer, often via Slack.
+
+3. The Needs and Benefits of Autonomous SRE
+The traditional incident response workflow is fundamentally broken for complex distributed systems.
+
+Eradicating Context Switching: Engineers typically waste the first 45 minutes of an incident jumping between a terminal, a metrics dashboard, and a logging tool. OpenSRE automates the context-gathering phase entirely, doing the heavy lifting while the engineer is just getting to their desk.
+
+Preserving Tribal Knowledge: When senior SREs leave, their specific troubleshooting workflows usually go with them. OpenSRE's episodic memory ensures that once an incident is resolved, the system permanently learns the exact sequence of queries that found the root cause.
+
+Evidence-Backed Confidence: Because of the strict multi-agent tool-calling loop, the output is fully auditable. SRE teams are not handed a black-box LLM hallucination; they are handed a traceable timeline of exactly which metrics spiked and which logs failed.
+
+Architecting This for the Hackathon
+For the SigNoz hackathon, we can heavily compress this architecture while maintaining the multi-agent wow factor.
+
+Instead of building 46 integrations, we build one incredibly deep integration: a Python-based LangGraph planner that uses the SigNoz MCP Server as its exclusive toolset. You can wire this Python backend up to a Next.js/React frontend via WebSockets, allowing the user to stream the AI's "thought process" in real-time as it queries SigNoz traces and diagnoses the system.  
+MD
+
+Plan the Node.js/Python Repo Setup
+
+Yes
+
+the homepage of opensre:
+
+Resolve incidents 10X faster
+
+OpenSRE investigates the moment an alert fires – correlating signals, testing hypotheses, and recommending fixes before you’re even paged.
+
+Ship long term fixes, not patches
+
+Under on-call pressure, teams ship patches. OpenSRE handles the investigation so you can focus on durable fixes.
+
+Senior-level context for everyone
+
+Stop waiting for senior engineers to investigate every incident. OpenSRE delivers the same depth of analysis to every team member.
+
+Test multiple hypotheses in parallel. Atomically correlate multiple information sources simultaneously for instant root cause analysis.
+
+Get actionable reports with context. See what broke, where, and how to fix it – directly in Slack, PagerDuty or wherever you communicate.
+
+Learn from every fix. Each resolution compounds knowledge so repeat incidents get faster investigations, or are prevented entirely.
+
+ A single source of truth for investigations. Connect observability, infra and team knowledge to find root causes and stop repeat incidents.
+
+
+
+When an alert fires, OpenSRE automatically:
+
+Fetches the alert context and correlated logs, metrics, traces, and recent deploys
+
+Masks sensitive identifiers (optional) before external LLM calls
+
+Reasons across your connected systems to test hypotheses in a tool-calling loop
+
+Generates a structured investigation report with probable root cause and linked evidence
+
+Suggests next steps and, optionally, executes remediation actions
+
+Posts a summary directly to Slack, PagerDuty, or Telegram — no context switching needed
+
+
+
+https://github.com/Tracer-Cloud/opensre/blob/main/AGENTS.md
+
+
+
+again attaching the hackathon's track 1 requirements too
+
+
+
+
+
+So let's first map out our entire plan for the product we are going to ship, and the sources our ideas are from, where to use which OpenSRE's feature's reference, from their github and docs, and everything necessary to get things done in quality.
+
+
+
+Be critical, and work like a Senior/Principal Engineer of a top Product Company like AWS
+
+This is exactly how we need to approach this. We have under 72 hours until the July 26th deadline. We cannot build a toy; we need to ship a production-grade orchestration layer.
+
+We will build "Project Over-Watch: The SigNoz SRE Command Center." We are going to hybridize the SRE Sidekick with SigNoz MCP and the Observability Slackbot, using OpenSRE’s LangGraph architecture as our blueprint.  
+MD
++ 1
+
+Here is the Principal-level execution plan, mapping exactly how we will extract OpenSRE's features, adapt them for our stack (Next.js, Python, Node.js), and crush the judging criteria.
+
+Phase 1: Architectural Mapping & Core Borrowing
+We are going to replicate OpenSRE's autonomous investigation pipeline, but strip away the bloat of their 60+ integrations. We will funnel 100% of the agent's tool-calling through the SigNoz MCP Server to satisfy the hackathon's "Best Use of SigNoz" criteria.  
+MD
++ 2
+
+The Pipeline (Adapted from OpenSRE):
+
+Ingestion & Masking: When a SigNoz alert fires, our webhook automatically fetches the alert context, correlated logs, and metrics. We will implement a lightweight PII masking step before the LLM call.  
+MD
++ 1
+
+Parallel Hypothesis Testing: We will build a LangGraph planner in Python that reasons across the connected systems in a tool-calling loop. It will test multiple hypotheses in parallel and atomically correlate multiple information sources.  
+MD
++ 1
+
+Evidence-Backed Diagnosis: The agent will generate a structured investigation report containing the probable root cause, strictly accompanied by linked evidence pulled from SigNoz.  
+MD
+
+Omni-Channel Delivery: The system will suggest next steps and post the summary directly to Slack to eliminate context switching. Simultaneously, the real-time reasoning loop will stream via WebSockets to our custom Next.js UI.  
+MD
+
+Phase 2: The Tech Stack & Responsibilities
+To maximize our velocity and hit the "Technical Excellence" criteria, we will divide the system across the modern full-stack ecosystem:  
+MD
+
+The Brain (Python / LangGraph):
+
+Python is the industry standard for AI agent orchestration. We will write the core ReAct loop here.
+
+This service will connect directly to the SigNoz MCP Server to fetch traces and logs.  
+MD
+
+The Gateway (Node.js / Express):
+
+A lightweight middleware that catches the initial webhook alerts from SigNoz.
+
+It triggers the Python agent and handles the Slack API integration for the Observability Slackbot feature.  
+MD
+
+Mission Control (Next.js / Tailwind CSS):
+
+To dominate the "User Experience" criteria, we will not rely solely on Slack.  
+MD
+
+We will build a sleek dashboard where engineers can watch the AI agent test hypotheses and correlate signals in real-time before they are even paged.  
+MD
+
+Phase 3: Attacking the Judging Criteria
+Every feature we build must map directly to the rubric. Here is how we defend our architecture to the judges:  
+MD
+
+01. Potential Impact: We are solving alert fatigue. By automating the investigation the moment an alert fires, we deliver senior-level context to everyone on the team and resolve incidents 10X faster.  
+MD
++ 1
+
+02. Creativity & Innovation: We are moving beyond static dashboards. Watching an AI stream its parallel trace queries via WebSockets into a Next.js UI pushes the boundaries of observability.  
+MD
+
+03. Technical Excellence: We will maintain clean, maintainable code by strictly separating the Node.js ingestion gateway, the Python agent logic, and the React frontend.  
+MD
+
+04. Best Use of SigNoz: This is our trump card. The agent only knows what it can query through the SigNoz MCP. It forces the agent to lean deeply and effectively on SigNoz traces, metrics, logs, and alerts.  
+MD
+
+05. User Experience: The Next.js dashboard will provide a highly polished, intuitive experience. The integration with Slack ensures users get actionable reports where they already communicate.  
+MD
++ 1
+
+06. Presentation Quality: The final README will clearly communicate the problem and solution. We will record a high-energy demo showing an injected error crashing a service, and the agent catching it, diagnosing it, and Slacking the root cause in under 30 seconds.  
+MD
+
+This is a heavy lift for the time remaining, but the architecture is modular.
