@@ -1,0 +1,10 @@
+signoz/
+output.json
+.git.bak/
+**/node_modules/
+**/.venv/
+**/__pycache__/
+**/.next/
+**/*.pyc
+agent-python/.env
+gateway-node/.env

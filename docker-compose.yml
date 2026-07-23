@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  # Message Broker for queueing incidents reliably
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: overwatch-rabbitmq
+    ports:
+      - "5672:5672"   # AMQP protocol port
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 5s
+      timeout: 10s
+      retries: 3
+    networks:
+      - overwatch-net
+
+  # Pub/Sub & State for streaming agent updates to the UI
+  redis:
+    image: redis:7-alpine
+    container_name: overwatch-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    networks:
+      - overwatch-net
+
+networks:
+  overwatch-net:
+    driver: bridge
