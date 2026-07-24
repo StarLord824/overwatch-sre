@@ -1,0 +1,268 @@
+[
+  {
+    "title": "checkout 5xx from payment-gateway pool exhaustion (v2.3.0)",
+    "root_cause": "payment-gateway HikariCP connection pool (max=20) saturated under sale traffic after v2.3.0, causing checkout POST /checkout calls to time out and return 500s.",
+    "summary": "Raised payment-gateway pool to 50 and added a circuit breaker on checkout\u2192payment-gateway; error rate recovered within 4 minutes.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-06-11T14:22:00Z"
+  },
+  {
+    "title": "checkout-service high error rate due to payment-gateway connection pool exhaustion",
+    "root_cause": "payment-gateway HikariCP connection pool (max=20) saturated, causing checkout POST /checkout calls to time out and return errors.",
+    "summary": "Increase payment-gateway connection pool size and add circuit breaker on checkout\u2192payment-gateway; error rate will recover.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T10:46:10Z"
+  },
+  {
+    "title": "search-service high p99 latency due to CPU saturation",
+    "root_cause": "search-service pods are CPU saturated (container_cpu_usage ~98%), causing local ranking compute to slow down and p99 latency to exceed 2s.",
+    "summary": "Scale up search-service CPU resources or optimize ranking compute; add alert on CPU usage >90% for 5m.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T10:46:22Z"
+  },
+  {
+    "title": "cart-service error rate spike after deploy (NullPointerException)",
+    "root_cause": "NullPointerException at CartController.applyCoupon (line 88) introduced in v2.4.1 deploy.",
+    "summary": "Immediate rollback of v2.4.1 or hotfix to handle null in applyCoupon; error rate will recover.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T10:47:06Z"
+  },
+  {
+    "title": "product-service p99 latency spike due to cache miss storm",
+    "root_cause": "product-service is serving requests via a cache miss path, resulting in 12 sequential postgres reads per request and tripled p99 latency.",
+    "summary": "Investigate and restore cache effectiveness for product-service; optimize query pattern to avoid sequential DB reads on cache miss.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T10:48:31Z"
+  },
+  {
+    "title": "payment-service p99 latency spike due to Stripe API slowness",
+    "root_cause": "External dependency (Stripe API) latency spiked, causing payment-service requests to time out.",
+    "summary": "Monitor Stripe API latency and implement fallback/retry logic to handle external slowness.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T10:49:17Z"
+  },
+  {
+    "title": "checkout-service high error rate due to payment-gateway connection pool exhaustion",
+    "root_cause": "payment-gateway HikariCP connection pool (max=20) saturated, causing checkout POST /checkout calls to time out and return errors.",
+    "summary": "Increase payment-gateway connection pool size and add circuit breaker on checkout\u2192payment-gateway; error rate will recover.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T10:50:01Z"
+  },
+  {
+    "title": "cart-service error rate spike after deploy (NullPointerException)",
+    "root_cause": "NullPointerException at CartController.applyCoupon (line 88) introduced in v2.4.1 deploy.",
+    "summary": "Immediate rollback of v2.4.1 or hotfix to handle null in applyCoupon; error rate will recover.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T10:51:17Z"
+  },
+  {
+    "title": "product-service p99 latency spike due to cache miss storm",
+    "root_cause": "product-service is serving requests via a cache miss path, resulting in 12 sequential postgres reads per request and tripled p99 latency.",
+    "summary": "Restore cache effectiveness for product-service and optimize query pattern to avoid sequential DB reads on cache miss.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T10:52:22Z"
+  },
+  {
+    "title": "payment-service p99 latency spike due to Stripe API slowness",
+    "root_cause": "External dependency (Stripe API) latency spiked, causing payment-service requests to time out.",
+    "summary": "Monitor Stripe API latency and implement fallback/retry logic to handle external slowness.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T10:53:10Z"
+  },
+  {
+    "title": "checkout-service high error rate due to payment-gateway connection pool exhaustion",
+    "root_cause": "payment-gateway HikariCP connection pool (max=20) saturated, causing checkout POST /checkout calls to time out and return errors.",
+    "summary": "Increase payment-gateway connection pool size and add circuit breaker on checkout\u2192payment-gateway; error rate will recover.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T10:54:02Z"
+  },
+  {
+    "title": "search-service high p99 latency due to CPU saturation",
+    "root_cause": "search-service pods are CPU saturated (container_cpu_usage ~98%), causing local ranking compute to slow down and p99 latency to exceed 2s.",
+    "summary": "Scale up search-service CPU resources or optimize ranking compute; add alert on CPU usage >90% for 5m.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T10:54:39Z"
+  },
+  {
+    "title": "cart-service error rate spike after deploy (NullPointerException)",
+    "root_cause": "NullPointerException at CartController.applyCoupon (line 88) introduced in v2.4.1 deploy.",
+    "summary": "Immediate rollback of v2.4.1 or hotfix to handle null in applyCoupon; error rate will recover.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T10:55:30Z"
+  },
+  {
+    "title": "payment-service p99 latency spike due to Stripe API slowness",
+    "root_cause": "External dependency (Stripe API) latency spiked, causing payment-service requests to time out.",
+    "summary": "Monitor Stripe API latency and implement fallback/retry logic to handle external slowness.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T10:56:52Z"
+  },
+  {
+    "title": "checkout-service high error rate due to payment-gateway connection pool exhaustion",
+    "root_cause": "payment-gateway HikariCP connection pool (max=20) saturated, causing checkout POST /checkout calls to time out and return errors.",
+    "summary": "Increase payment-gateway connection pool size and add circuit breaker on checkout\u2192payment-gateway; error rate will recover.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T11:16:01Z"
+  },
+  {
+    "title": "search-service high p99 latency due to CPU saturation",
+    "root_cause": "search-service pods are CPU saturated (container_cpu_usage ~98%), causing local ranking compute to slow down and p99 latency to exceed 2s.",
+    "summary": "Scale up search-service CPU resources or optimize ranking compute; add alert on CPU usage >90% for 5m.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T11:16:25Z"
+  },
+  {
+    "title": "cart-service error rate spike after deploy (NullPointerException)",
+    "root_cause": "NullPointerException at CartController.applyCoupon (line 88) introduced in v2.4.1 deploy.",
+    "summary": "Immediate rollback of v2.4.1 or hotfix to handle null in applyCoupon; error rate will recover.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T11:17:03Z"
+  },
+  {
+    "title": "product-service p99 latency spike due to cache miss storm",
+    "root_cause": "product-service is serving requests via a cache miss path, resulting in 12 sequential postgres reads per request and tripled p99 latency.",
+    "summary": "Restore cache effectiveness for product-service and optimize query pattern to avoid sequential DB reads on cache miss.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T11:17:42Z"
+  },
+  {
+    "title": "payment-service p99 latency spike due to Stripe API slowness",
+    "root_cause": "External dependency (Stripe API) latency spiked, causing payment-service requests to time out.",
+    "summary": "Monitor Stripe API latency and implement fallback/retry logic to handle external slowness.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T11:18:29Z"
+  },
+  {
+    "title": "checkout-service high error rate due to payment-gateway connection pool exhaustion",
+    "root_cause": "payment-gateway HikariCP connection pool (max=20) saturated, causing checkout POST /checkout calls to time out and return errors.",
+    "summary": "Increase payment-gateway connection pool size and add circuit breaker on checkout\u2192payment-gateway; error rate will recover.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T11:19:29Z"
+  },
+  {
+    "title": "search-service high p99 latency from CPU saturation",
+    "root_cause": "search-service pods are CPU saturated (container_cpu_usage ~98%), causing local ranking compute to slow down and p99 latency to exceed 2s.",
+    "summary": "Scale up search-service CPU resources or optimize ranking compute; add alert on CPU usage >90% for 5m.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T11:20:06Z"
+  },
+  {
+    "title": "cart-service error rate spike after deploy (NullPointerException)",
+    "root_cause": "NullPointerException at CartController.applyCoupon (line 88) introduced in v2.4.1 deploy.",
+    "summary": "Rollback v2.4.1 or hotfix to handle null in applyCoupon; error rate will recover.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T11:20:44Z"
+  },
+  {
+    "title": "product-service p99 latency spike due to cache miss storm",
+    "root_cause": "product-service is serving requests via a cache miss path, resulting in 12 sequential postgres reads per request and tripled p99 latency.",
+    "summary": "Restore cache effectiveness for product-service and optimize query pattern to avoid sequential DB reads on cache miss.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T11:21:36Z"
+  },
+  {
+    "title": "payment-service p99 latency spike due to Stripe API slowness",
+    "root_cause": "External dependency (Stripe API) latency spiked, causing payment-service requests to time out.",
+    "summary": "Monitor Stripe API latency and implement fallback/retry logic to handle external slowness.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T11:22:15Z"
+  },
+  {
+    "title": "checkout-service high error rate due to payment-gateway connection pool exhaustion",
+    "root_cause": "payment-gateway HikariCP connection pool (max=20) saturated, causing checkout POST /checkout calls to time out and return errors.",
+    "summary": "Increase payment-gateway connection pool size and add circuit breaker on checkout\u2192payment-gateway; error rate will recover.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T11:23:16Z"
+  },
+  {
+    "title": "search-service high p99 latency due to CPU saturation",
+    "root_cause": "search-service pods are CPU saturated (container_cpu_usage ~98%), causing local ranking compute to slow down and p99 latency to exceed 2s.",
+    "summary": "Scale up search-service CPU resources or optimize ranking compute; add alert on CPU usage >90% for 5m.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T11:23:49Z"
+  },
+  {
+    "title": "cart-service error rate spike after deploy (NullPointerException)",
+    "root_cause": "NullPointerException at CartController.applyCoupon (line 88) introduced in v2.4.1 deploy.",
+    "summary": "Immediate rollback of v2.4.1 or hotfix to handle null in applyCoupon; error rate will recover.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T11:24:21Z"
+  },
+  {
+    "title": "product-service p99 latency spike due to cache miss storm",
+    "root_cause": "product-service is serving requests via a cache miss path, resulting in 12 sequential postgres reads per request and tripled p99 latency.",
+    "summary": "Restore cache effectiveness for product-service and optimize query pattern to avoid sequential DB reads on cache miss.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T11:25:06Z"
+  },
+  {
+    "title": "payment-service p99 latency spike due to Stripe API slowness",
+    "root_cause": "External dependency (Stripe API) latency spiked, causing payment-service requests to time out.",
+    "summary": "Monitor Stripe API latency and implement fallback/retry logic to handle external slowness.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T11:25:53Z"
+  },
+  {
+    "title": "checkout-service high error rate due to payment-gateway connection pool exhaustion",
+    "root_cause": "payment-gateway HikariCP connection pool (max=20) saturated, causing checkout POST /checkout calls to time out and return errors.",
+    "summary": "Increase payment-gateway connection pool size and add circuit breaker on checkout\u2192payment-gateway; error rate will recover.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T21:09:42Z"
+  },
+  {
+    "title": "checkout-service high error rate due to payment-gateway timeouts (pool likely saturated)",
+    "root_cause": "checkout-service POST /checkout requests are failing with upstream timeouts to payment-gateway, consistent with historical incidents caused by payment-gateway connection pool exhaustion. No direct pool exhaustion logs found, but traces show repeated timeouts to payment-gateway charge_card.",
+    "summary": "Increase payment-gateway connection pool size and add circuit breaker on checkout\u2192payment-gateway; error rate will recover.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T21:25:24Z"
+  },
+  {
+    "title": "checkout-service high error rate due to payment-gateway upstream timeout",
+    "root_cause": "checkout-service POST /checkout requests are failing due to upstream timeouts to payment-gateway, likely caused by payment-gateway resource saturation or connection pool exhaustion. This matches previous incidents and runbook guidance, though direct pool exhaustion evidence is missing in logs/metrics.",
+    "summary": "Investigate and scale payment-gateway resources or pool size; add circuit breaker on checkout\u2192payment-gateway to prevent cascading failures.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-24T21:28:05Z"
+  },
+  {
+    "title": "checkout-service high error rate due to payment-gateway upstream timeout",
+    "root_cause": "checkout-service POST /checkout requests are failing due to upstream timeouts when calling payment-gateway (as seen in trace IDs a6daa22eff9e3d9d0c50091169d36f5c, 1cf063f0f1c6a21762acf2f6e622ee97, 02c7e5e72d856fb98043707bb04d3528). This matches prior incidents caused by payment-gateway connection pool exhaustion, though no explicit pool exhaustion log was found this time.",
+    "summary": "Increase payment-gateway connection pool size and/or add circuit breaker on checkout\u2192payment-gateway. Investigate payment-gateway resource saturation.",
+    "confidence": "",
+    "resolved_at": "2026-07-24T22:14:52Z"
+  },
+  {
+    "title": "checkout-service high error rate due to payment-gateway upstream timeout",
+    "root_cause": "checkout-service POST /checkout requests are failing with upstream timeouts to payment-gateway, as shown in distributed traces. This matches prior incidents where payment-gateway connection pool exhaustion caused similar symptoms, though no explicit pool exhaustion log was found this time.",
+    "summary": "Investigate payment-gateway resource saturation or connection pool limits; consider raising pool size and adding circuit breaker on checkout\u2192payment-gateway.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-25T12:21:00Z"
+  },
+  {
+    "title": "checkout-service high error rate due to payment-gateway upstream timeout",
+    "root_cause": "checkout-service POST /checkout requests are failing with upstream timeouts to payment-gateway, as shown in traces. No direct evidence of connection pool exhaustion or explicit timeout errors in payment-gateway logs, but all error traces show checkout-service timing out on payment-gateway calls.",
+    "summary": "Investigate payment-gateway health and capacity; consider increasing pool size or adding circuit breaker. All checkout-service errors are due to upstream timeouts to payment-gateway.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-25T12:24:52Z"
+  },
+  {
+    "title": "checkout-service high error rate due to payment-gateway upstream timeout",
+    "root_cause": "payment-gateway is timing out on charge_card requests from checkout-service, likely due to connection pool exhaustion or downstream unavailability. This matches prior incidents and runbook guidance.",
+    "summary": "Investigated traces show checkout-service errors originate from upstream timeouts to payment-gateway during charge_card calls. Immediate action: increase payment-gateway pool size and/or add circuit breaker.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-25T12:30:27Z"
+  },
+  {
+    "title": "checkout-service high error rate due to payment-gateway connection pool exhaustion",
+    "root_cause": "payment-gateway HikariCP connection pool (max=20) exhausted, causing checkout POST /checkout calls to time out and return errors.",
+    "summary": "Increase payment-gateway connection pool size and add circuit breaker on checkout\u2192payment-gateway; error rate will recover.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-25T12:37:58Z"
+  },
+  {
+    "title": "checkout-service high error rate due to payment-gateway connection pool exhaustion",
+    "root_cause": "payment-gateway HikariCP connection pool (max=20) exhausted, causing checkout POST /checkout calls to time out and return 500 errors.",
+    "summary": "Increase payment-gateway connection pool size and/or add circuit breaker on checkout\u2192payment-gateway; error rate will recover.",
+    "confidence": "HIGH",
+    "resolved_at": "2026-07-25T12:39:19Z"
+  }
+]
