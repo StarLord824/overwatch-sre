@@ -11,6 +11,28 @@ dependencies = [
     "pika>=1.3.2",
     "python-dotenv>=1.2.2",
     "redis>=5.0.1",
+    "typer>=0.15.0",
+    "rich>=13.9.0",
+]
+
+[project.scripts]
+overwatch = "cli.app:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+include = [
+    "cli",
+    "agent",
+    "eval",
+    "knowledge",
+    "signoz_mcp",
+    "utils",
+    "demo",
+    "config.py",
+    "main.py",
 ]
 
 [dependency-groups]

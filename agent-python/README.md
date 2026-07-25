@@ -51,7 +51,7 @@ docker pull signoz/signoz-mcp-server:latest
 **Preflight** — confirm the agent can actually reach SigNoz before a full run:
 
 ```bash
-uv run python -m signoz_mcp.smoke
+uv run overwatch doctor --deep
 ```
 
 For the complete live end-to-end walkthrough (stand up SigNoz, generate real
@@ -64,10 +64,27 @@ data, run `--live` and the full pipeline), see [`../SETUP-LIVE.md`](../SETUP-LIV
 ## Run
 
 ```bash
-uv sync                       # installs openai + mcp SDK + pika/redis
+uv sync                       # installs the agent, CLI, and dependencies
 cp .env.example .env          # fill in OPENAI_API_KEY, SIGNOZ_URL, SIGNOZ_API_KEY
-uv run python main.py         # worker listens on RabbitMQ incidents_queue
+uv run overwatch              # interactive menu
 ```
+
+Everything is available through one command:
+
+| Command | What it does |
+|---|---|
+| `overwatch` | Interactive menu — pick an action, no flags to memorise |
+| `overwatch doctor` | Check the setup and say exactly what's broken (`--deep` also spawns the MCP server and runs a live query) |
+| `overwatch eval` | Run the RCA benchmark and print a scorecard |
+| `overwatch demo` | Drive real traffic through the demo app and inject a fault |
+| `overwatch worker` | Consume incidents from RabbitMQ (the full pipeline) |
+| `overwatch guide` | What Over-Watch does, how to run it, how to fix problems |
+
+Run `overwatch <command> --help` for flags. The underlying modules
+(`python main.py`, `python -m eval.run_eval`, …) still work unchanged if you
+prefer them.
+
+**Start here if something isn't working:** `uv run overwatch doctor`.
 
 ## 📊 RCA benchmark (the proof it works)
 
@@ -76,12 +93,12 @@ known root causes and deliberate red herrings**, then scores it. This is the
 number for your demo — no clone-without-proof can match it.
 
 ```bash
-uv run python -m eval.run_eval --list        # the 5 scenarios (no LLM needed)
-uv run python -m eval.run_eval --dry-run     # validate fixtures + scorer (no LLM)
-uv run python -m eval.run_eval               # run the benchmark (needs OPENAI_API_KEY)
-uv run python -m eval.run_eval --trials 3    # repeat 3× and report variance (the honest number)
-uv run python -m eval.run_eval --no-judge    # keyword-only scoring, no judge calls
-uv run python -m eval.run_eval --live        # score against a real SigNoz MCP instead of fixtures
+uv run overwatch eval --list        # the 5 scenarios (no LLM needed)
+uv run overwatch eval --dry-run     # validate fixtures + scorer (no LLM)
+uv run overwatch eval               # run the benchmark (needs OPENAI_API_KEY)
+uv run overwatch eval --trials 3    # repeat 3x and report variance (the honest number)
+uv run overwatch eval --no-judge    # keyword-only scoring, no judge calls
+uv run overwatch eval --live        # score against a real SigNoz MCP instead of fixtures
 ```
 
 Each scenario ships its own telemetry, so the benchmark is **deterministic and
@@ -107,15 +124,25 @@ Scenarios and their ground truth live in `eval/scenarios.py`; the judge in
 
 ```bash
 uv sync --group demo
-export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
-python demo/sample_app.py     # instrumented checkout→payment-gateway service
-python demo/trigger_incident.py   # baseline traffic → inject fault → fire webhook
+uv run python demo/sample_app.py   # leave running: checkout-service + payment-gateway
+uv run overwatch demo              # baseline traffic -> inject fault -> fire webhook
 ```
+
+The demo app exports **traces and logs for two services** to SigNoz Cloud (set
+`SIGNOZ_INGESTION_KEY` and `SIGNOZ_REGION` in `.env`), or to a local collector
+via `OTEL_EXPORTER_OTLP_ENDPOINT` if no ingestion key is set.
 
 ## Layout
 
 ```
 agent-python/
+├── cli/                   # the `overwatch` command
+│   ├── app.py             # Typer app: subcommands + no-arg interactive menu
+│   ├── doctor.py          # environment diagnostics with remediation hints
+│   ├── guide.py           # in-terminal guidance (scenarios pulled live)
+│   ├── render.py          # Rich scorecard + variance rendering
+│   ├── console.py         # shared console + colour theme
+│   └── commands/          # thin wrappers over the underlying functions
 ├── main.py                # RabbitMQ worker → runs the investigation, streams to Redis
 ├── config.py              # all env config + MCP launch command builder
 ├── agent/

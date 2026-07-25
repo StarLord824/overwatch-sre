@@ -96,18 +96,18 @@ async def _run_all(scenarios: list[Scenario], live: bool, use_judge: bool,
             if not first and pace > 0:
                 await asyncio.sleep(pace)
             first = False
-            tag = f"trial {t}/{trials} · " if trials > 1 else ""
+            tag = f"trial {t}/{trials} | " if trials > 1 else ""
             print(f"[{tag}{i}/{len(scenarios)}] investigating: {sc.id} ...", flush=True)
             results.append(await _run_one(sc, live, use_judge))
         cards.append(Scorecard(results))
     return cards
 
 
-# ── output ────────────────────────────────────────────────────────────────────
+# -- output --------------------------------------------------------------------
 
 def _print_scorecard(card: Scorecard) -> None:
     print("\n" + "=" * 82)
-    print(" OVER-WATCH RCA BENCHMARK — SCORECARD")
+    print(" OVER-WATCH RCA BENCHMARK - SCORECARD")
     print("=" * 82)
     print(f"{'scenario':28} {'RCA':4} {'herr':5} {'ev':5} {'rub':5} {'llm':4} {'$cost':8} {'by':7}")
     print("-" * 82)
@@ -122,9 +122,9 @@ def _print_scorecard(card: Scorecard) -> None:
         if r.error:
             print(f"    ! error: {r.error}")
         elif r.scored_by == "judge" and not r.class_correct:
-            print(f"    · predicted class '{r.predicted_class}' (expected the scenario's true class)")
+            print(f"    | predicted class '{r.predicted_class}' (expected the scenario's true class)")
         elif r.scored_by == "keyword" and r.missing_expected:
-            print(f"    · missing expected terms: {', '.join(r.missing_expected)}")
+            print(f"    | missing expected terms: {', '.join(r.missing_expected)}")
     print("-" * 82)
     s = card.to_dict()["summary"]
     n_correct = sum(r.root_cause_correct for r in card.results)
@@ -141,27 +141,27 @@ def _print_scorecard(card: Scorecard) -> None:
     for cat, stat in card.by_category().items():
         print(f"    {cat:24} acc {stat['accuracy']*100:.0f}%  pass {stat['pass_rate']*100:.0f}%  (n={stat['n']})")
     print("=" * 82)
-    # If the judge was requested but silently fell back to keywords, say why —
+    # If the judge was requested but silently fell back to keywords, say why -
     # keyword scoring is brittle, so the user should know it wasn't the judge.
     if card.scored_by == "keyword":
         reason = next((r.judge_reasoning for r in card.results if r.judge_reasoning), "")
         if reason:
-            print(f" ⚠ judge unavailable → scored by KEYWORD fallback. Reason: {reason}")
+            print(f" ! judge unavailable -> scored by KEYWORD fallback. Reason: {reason}")
             print("   Set EVAL_JUDGE_MODEL to a model your key can access (e.g. gpt-4.1) for robust scoring.")
 
 
 def _print_variance(cards: list[Scorecard]) -> None:
-    """When trials > 1, report the mean and spread — a single run isn't a number."""
+    """When trials > 1, report the mean and spread - a single run isn't a number."""
     accs = [c.accuracy for c in cards]
     passes = [c.pass_rate for c in cards]
     costs = [c.total_cost for c in cards]
     mean = statistics.mean
     stdev = statistics.pstdev
     print("\n" + "#" * 82)
-    print(f" VARIANCE ACROSS {len(cards)} TRIALS  (LLMs are nondeterministic — this is the honest number)")
+    print(f" VARIANCE ACROSS {len(cards)} TRIALS  (LLMs are nondeterministic - this is the honest number)")
     print("#" * 82)
-    print(f" RCA accuracy : mean {mean(accs)*100:.0f}%  ± {stdev(accs)*100:.0f}pp   per-trial {[f'{a*100:.0f}%' for a in accs]}")
-    print(f" Pass rate    : mean {mean(passes)*100:.0f}%  ± {stdev(passes)*100:.0f}pp   per-trial {[f'{p*100:.0f}%' for p in passes]}")
+    print(f" RCA accuracy : mean {mean(accs)*100:.0f}%  +/- {stdev(accs)*100:.0f}pp   per-trial {[f'{a*100:.0f}%' for a in accs]}")
+    print(f" Pass rate    : mean {mean(passes)*100:.0f}%  +/- {stdev(passes)*100:.0f}pp   per-trial {[f'{p*100:.0f}%' for p in passes]}")
     print(f" Total cost   : mean ${mean(costs):.4f} per trial")
     print("#" * 82)
 
@@ -186,7 +186,7 @@ def main() -> None:
 
     if args.list:
         for s in SCENARIOS:
-            print(f"{s.id:28} — {s.title}")
+            print(f"{s.id:28} - {s.title}")
         return
 
     if args.dry_run:
@@ -215,7 +215,7 @@ def _dry_run(scenarios: list[Scenario]) -> None:
     'evidence' text through the scorer as a perfect report, and confirm it scores
     as PASS. Also sanity-check that a report naming the red herring is caught.
     """
-    print("DRY RUN — validating fixtures + scorer (no LLM calls)\n")
+    print("DRY RUN - validating fixtures + scorer (no LLM calls)\n")
     ok = True
     for sc in scenarios:
         perfect = {

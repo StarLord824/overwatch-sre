@@ -62,7 +62,7 @@ SIGNOZ_MCP_MODE=docker
 ```bash
 cd agent-python
 uv sync
-uv run python -m signoz_mcp.smoke
+uv run overwatch doctor --deep
 ```
 
 Expected: `✓ Connected. MCP exposes N tools.` and a `signoz_list_services`
@@ -95,7 +95,7 @@ the SigNoz UI.
 ## 6a. Run the benchmark against live SigNoz
 
 ```bash
-uv run python -m eval.run_eval --live --trials 1
+uv run overwatch eval --live --trials 1
 ```
 
 > Note: the fixture scenarios reference synthetic services (checkout-service,

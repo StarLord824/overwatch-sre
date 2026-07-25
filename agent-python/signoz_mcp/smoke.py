@@ -2,7 +2,7 @@
 Preflight connectivity test for the SigNoz MCP server.
 
 Run this BEFORE `--live` to confirm the agent can actually reach SigNoz through
-the MCP server — so you're not debugging a full investigation to discover the
+the MCP server - so you're not debugging a full investigation to discover the
 connection is down.
 
     uv run python -m signoz_mcp.smoke
@@ -27,7 +27,7 @@ from signoz_mcp import SigNozMCP
 async def main() -> int:
     command, args, _ = signoz_mcp_launch()
     print("SigNoz MCP preflight")
-    print("─" * 60)
+    print("-" * 60)
     print(f"  mode        : {SIGNOZ_MCP_MODE}")
     print(f"  SIGNOZ_URL  : {SIGNOZ_URL}")
     if SIGNOZ_MCP_MODE == "docker":
@@ -38,23 +38,23 @@ async def main() -> int:
         for a in args
     ]
     print(f"  launch      : {command} {' '.join(safe_args)}")
-    print("─" * 60)
+    print("-" * 60)
     print("Connecting (this spawns the MCP server over stdio)...\n")
 
     sig = SigNozMCP()
     async with sig.session() as s:
         if not s.live:
-            print("✗ NOT connected — the agent fell back to MOCK data.")
+            print("x NOT connected - the agent fell back to MOCK data.")
             print("\nCheck:")
-            print("  • Is SigNoz running and reachable at SIGNOZ_URL?")
-            print("  • For docker mode + host SigNoz, SIGNOZ_URL should resolve from")
+            print("  * Is SigNoz running and reachable at SIGNOZ_URL?")
+            print("  * For docker mode + host SigNoz, SIGNOZ_URL should resolve from")
             print("    inside the container (localhost is auto-rewritten to")
             print("    host.docker.internal).")
-            print("  • Did you `docker pull` the MCP image? Is SIGNOZ_API_KEY set?")
-            print("  • Try SIGNOZ_MCP_MODE=binary with SIGNOZ_MCP_BINARY if docker is the issue.")
+            print("  * Did you `docker pull` the MCP image? Is SIGNOZ_API_KEY set?")
+            print("  * Try SIGNOZ_MCP_MODE=binary with SIGNOZ_MCP_BINARY if docker is the issue.")
             return 1
 
-        print(f"✓ Connected. MCP exposes {len(s.tool_names)} tools.")
+        print(f"v Connected. MCP exposes {len(s.tool_names)} tools.")
         interesting = [t for t in s.tool_names if t in {
             "signoz_list_services", "signoz_search_traces", "signoz_search_logs",
             "signoz_query_metrics", "signoz_list_alerts", "signoz_get_trace_details",
@@ -72,12 +72,12 @@ async def main() -> int:
         if any(m in lowered for m in ("unexpected status 4", "unexpected status 5",
                                        "\"error\"", "forbidden", "unauthorized",
                                        "403", "401")):
-            print("\n✗ Connected to the MCP server, but the SigNoz API rejected the query.")
+            print("\nx Connected to the MCP server, but the SigNoz API rejected the query.")
             print("  Most likely the service-account key needs a role. Set it to EDITOR")
             print("  or ADMIN (Editor+ is required for the agent's signoz_create_alert).")
             return 2
 
-        print("\n✓ Live SigNoz telemetry is reachable. You're clear to run --live.")
+        print("\nv Live SigNoz telemetry is reachable. You're clear to run --live.")
         return 0
 
 
