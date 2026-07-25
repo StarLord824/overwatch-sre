@@ -7,7 +7,7 @@ tool definitions match what the server actually expects.
     uv run python -m signoz_mcp.inspect create     # full schema for create_* tools
 
 Use this when a tool call silently does nothing (e.g. signoz_create_alert not
-actually creating an alert) — the printed inputSchema tells us the true params.
+actually creating an alert) - the printed inputSchema tells us the true params.
 """
 
 from __future__ import annotations

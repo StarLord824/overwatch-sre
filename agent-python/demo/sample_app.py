@@ -1,5 +1,5 @@
 """
-Demo instrumented service — a tiny two-service checkout flow wired to SigNoz via
+Demo instrumented service - a tiny two-service checkout flow wired to SigNoz via
 OpenTelemetry. Run it to generate REAL traces/logs/metrics so the agent has live
 data to investigate (instead of the mock fallback).
 
@@ -12,7 +12,7 @@ data to investigate (instead of the mock fallback).
 Then drive traffic + inject a fault with demo/trigger_incident.py.
 
 The fault: after /break is called, checkout starts calling a saturated
-payment-gateway that times out — producing exactly the errors described in the
+payment-gateway that times out - producing exactly the errors described in the
 checkout-5xx runbook.
 """
 
@@ -29,7 +29,7 @@ from flask import Flask, jsonify
 # Pick up SIGNOZ_INGESTION_KEY / SIGNOZ_REGION from the agent's .env automatically.
 load_dotenv()
 
-# ── OpenTelemetry setup ───────────────────────────────────────────────────────
+# -- OpenTelemetry setup -------------------------------------------------------
 from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
@@ -37,7 +37,7 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 
-# Logs signal — so the pool-timeout ERROR lines actually reach SigNoz and the
+# Logs signal - so the pool-timeout ERROR lines actually reach SigNoz and the
 # agent's signoz_search_logs returns real evidence (not just traces).
 from opentelemetry._logs import set_logger_provider
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
@@ -46,10 +46,10 @@ from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
 
 SERVICE_NAME = os.getenv("OTEL_SERVICE_NAME", "checkout-service")
 
-# ── Exporter: SigNoz Cloud (if an ingestion key is set) or local collector ─────
+# -- Exporter: SigNoz Cloud (if an ingestion key is set) or local collector -----
 # Cloud: set SIGNOZ_INGESTION_KEY (+ optionally SIGNOZ_REGION, default us2). The
 # exporter uses TLS to ingest.<region>.signoz.cloud:443 with the ingestion-key
-# header — no code changes, no local collector, matches the SETUP-LIVE cloud path.
+# header - no code changes, no local collector, matches the SETUP-LIVE cloud path.
 # Local: falls back to insecure OTLP at OTEL_EXPORTER_OTLP_ENDPOINT (:4317).
 # Both traces AND logs share the same endpoint/auth.
 _INGEST_KEY = os.getenv("SIGNOZ_INGESTION_KEY", "")
@@ -75,7 +75,7 @@ provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(**_exp_kwargs)))
 trace.set_tracer_provider(provider)
 tracer = trace.get_tracer(__name__)
 
-# Logs — route Python logging for this service through OTLP to SigNoz. Because
+# Logs - route Python logging for this service through OTLP to SigNoz. Because
 # each logger.error() below runs inside the request span, logs carry trace
 # context and correlate with the failing traces.
 _logger_provider = LoggerProvider(resource=resource)
@@ -87,10 +87,10 @@ logging.getLogger(SERVICE_NAME).addHandler(_otel_log_handler)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(SERVICE_NAME)
 
-# ── payment-gateway as a SEPARATE service ─────────────────────────────────────
+# -- payment-gateway as a SEPARATE service -------------------------------------
 # The downstream dependency gets its own resource (service.name=payment-gateway)
 # for both traces and logs, so SigNoz sees a genuine two-service distributed
-# trace — and an investigator querying logs/traces for "payment-gateway" finds
+# trace - and an investigator querying logs/traces for "payment-gateway" finds
 # real telemetry there, exactly as it would in production. Spans still inherit
 # the active context, so they remain children of the checkout-service span.
 DOWNSTREAM_SERVICE = "payment-gateway"
@@ -108,7 +108,7 @@ pg_logger.addHandler(LoggingHandler(level=logging.INFO, logger_provider=_pg_logg
 app = Flask(__name__)
 FlaskInstrumentor().instrument_app(app)
 
-# In-memory fault switch — flipped by /break and /heal.
+# In-memory fault switch - flipped by /break and /heal.
 STATE = {"broken": False}
 
 
