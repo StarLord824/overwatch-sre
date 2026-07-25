@@ -66,7 +66,13 @@ def process_incident(ch, method, properties, body) -> None:
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 
-def main() -> None:
+def run_worker() -> None:
+    """
+    Connect to RabbitMQ and consume incidents until interrupted.
+
+    Exposed as a function so the `overwatch worker` CLI command and the
+    `python main.py` entry point share exactly one implementation.
+    """
     logger.info("Starting Over-Watch agent worker...")
     connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
     channel = connection.channel()
@@ -83,5 +89,9 @@ def main() -> None:
     connection.close()
 
 
+# Backwards-compatible alias for `python main.py`.
+main = run_worker
+
+
 if __name__ == "__main__":
-    main()
+    run_worker()

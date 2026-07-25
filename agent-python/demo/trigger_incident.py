@@ -7,8 +7,8 @@ webhook at the gateway so the full pipeline runs on REAL data.
 Steps:
   1. Send baseline healthy traffic to the demo app (builds a normal p99 baseline).
   2. POST /break to saturate the payment-gateway.
-  3. Send more traffic → errors + slow spans land in SigNoz.
-  4. POST the alert webhook to the Node gateway → agent investigates.
+  3. Send more traffic -> errors + slow spans land in SigNoz.
+  4. POST the alert webhook to the Node gateway -> agent investigates.
 """
 
 from __future__ import annotations
@@ -31,18 +31,26 @@ def traffic(n: int) -> None:
             err += r.status_code >= 500
         except requests.RequestException:
             err += 1
-    print(f"  sent {n} requests → {ok} ok, {err} errors")
+    print(f"  sent {n} requests -> {ok} ok, {err} errors")
 
 
-def main() -> None:
+def run_demo(baseline: int = 20, faulted: int = 30) -> bool:
+    """
+    Drive the full demo incident: baseline traffic, fault injection, error
+    traffic, then fire the webhook at the gateway.
+
+    Returns True if the gateway accepted the webhook (full pipeline is live),
+    False if the gateway wasn't running (telemetry still reached SigNoz).
+    Raises requests.RequestException if the demo app itself is unreachable.
+    """
     print("1) Baseline healthy traffic...")
-    traffic(20)
+    traffic(baseline)
 
     print("2) Injecting fault (payment-gateway pool saturation)...")
     requests.post(f"{DEMO_APP}/break", timeout=10)
 
     print("3) Traffic under fault (generating error/slow traces)...")
-    traffic(30)
+    traffic(faulted)
 
     print("4) Firing SigNoz alert webhook at the gateway (optional)...")
     payload = {
@@ -57,9 +65,17 @@ def main() -> None:
     try:
         resp = requests.post(f"{GATEWAY}/api/webhooks/signoz", json=payload, timeout=10)
         print(f"   gateway responded {resp.status_code}: {resp.text}")
-        print("\nWatch the dashboard at http://localhost:3000 — the agent is investigating.")
+        return True
     except requests.RequestException:
-        print("   (gateway not running — skipped. Telemetry was still sent to SigNoz.)")
+        print("   (gateway not running - skipped. Telemetry was still sent to SigNoz.)")
+        return False
+
+
+def main() -> None:
+    delivered = run_demo()
+    if delivered:
+        print("\nWatch the dashboard at http://localhost:3000 - the agent is investigating.")
+    else:
         print("\n   Traffic + fault sent. In ~1-2 min checkout-service appears in SigNoz,")
         print("   then investigate it live with:")
         print("   uv run python -m eval.run_eval --live --only checkout-pool-exhaustion")
