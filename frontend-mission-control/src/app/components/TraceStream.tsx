@@ -32,12 +32,30 @@ interface Props {
   been going on".
 */
 
-function compactArgs(args: unknown): string | null {
+const ARG_VALUE_LIMIT = 64;
+
+/** Every step is one line in the trace. A memory-write call can carry a whole
+ *  paragraph as an argument (title/root_cause/summary); truncate per-value so
+ *  one verbose call can't break the rhythm the rest of the waterfall keeps. */
+function truncateValue(v: string): string {
+  return v.length > ARG_VALUE_LIMIT
+    ? `${v.slice(0, ARG_VALUE_LIMIT)}...`
+    : v;
+}
+
+function compactArgs(args: unknown): { short: string; full: string } | null {
   if (!args || typeof args !== "object") return null;
-  const entries = Object.entries(args as Record<string, unknown>)
+  const pairs = Object.entries(args as Record<string, unknown>)
     .filter(([, v]) => v !== "" && v !== null && v !== undefined)
-    .map(([k, v]) => `${k}=${typeof v === "string" ? v : JSON.stringify(v)}`);
-  return entries.length ? entries.join("  ") : null;
+    .map(
+      ([k, v]) =>
+        [k, typeof v === "string" ? v : JSON.stringify(v)] as [string, string],
+    );
+  if (!pairs.length) return null;
+  return {
+    short: pairs.map(([k, v]) => `${k}=${truncateValue(v)}`).join("  "),
+    full: pairs.map(([k, v]) => `${k}=${v}`).join("\n"),
+  };
 }
 
 export default function TraceStream({ events, t0, running, now }: Props) {
@@ -148,10 +166,15 @@ export default function TraceStream({ events, t0, running, now }: Props) {
                       </p>
                     )}
 
-                    {/* what the tool was actually asked */}
+                    {/* what the tool was actually asked - one line, always;
+                        hover (or focus, for keyboard/touch) reveals the rest */}
                     {args && (
-                      <p className="mt-1.5 break-words font-mono text-[11px] leading-relaxed text-ink-2">
-                        {args}
+                      <p
+                        tabIndex={0}
+                        title={args.full}
+                        className="mt-1.5 truncate font-mono text-[11px] text-ink-2 focus:overflow-visible focus:whitespace-normal focus:break-words"
+                      >
+                        {args.short}
                       </p>
                     )}
 
