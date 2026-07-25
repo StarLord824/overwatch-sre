@@ -1,0 +1,46 @@
+{
+  "summary": {
+    "scenarios": 1,
+    "scored_by": "judge",
+    "rca_accuracy": 1.0,
+    "pass_rate": 1.0,
+    "mean_evidence_recall": 1.0,
+    "mean_rubric_score": 1.0,
+    "herring_resistance": 1.0,
+    "mean_cost_usd": 0.06683,
+    "total_cost_usd": 0.06683,
+    "mean_llm_calls": 4.0
+  },
+  "by_category": {
+    "downstream_dependency": {
+      "n": 1,
+      "accuracy": 1.0,
+      "pass_rate": 1.0
+    }
+  },
+  "results": [
+    {
+      "scenario_id": "checkout-pool-exhaustion",
+      "title": "checkout 5xx from payment-gateway connection pool exhaustion",
+      "root_cause_correct": true,
+      "evidence_recall": 1.0,
+      "herring_resisted": true,
+      "llm_calls": 4,
+      "tool_calls": 8,
+      "cost_usd": 0.06683,
+      "used_memory": true,
+      "used_runbook": true,
+      "signoz_live": true,
+      "reported_confidence": "HIGH",
+      "error": "",
+      "missing_expected": [],
+      "category": "downstream_dependency",
+      "scored_by": "judge",
+      "keyword_correct": true,
+      "predicted_class": "downstream_dependency_saturation",
+      "class_correct": true,
+      "rubric_score": 1.0,
+      "judge_reasoning": "The report clearly identifies payment-gateway as the failing dependency, explicitly names connection pool exhaustion as the mechanism, and does not mention or blame the inventory-service. This matches the 'downstream_dependency_saturation' class and satisfies all rubric points."
+    }
+  ]
+}
