@@ -65,7 +65,7 @@ flowchart TD
         Gateway -->|publish incident| RabbitMQ[(RabbitMQ<br/>incidents_queue)]
     end
 
-    subgraph Brain Layer — agent-python
+    subgraph "Brain Layer - agent-python"
         RabbitMQ -->|consume| Main[main.py worker]
         Main -->|mask PII| Mask[utils/masking.py]
         Mask --> Loop[Investigator<br/>direct tool-calling loop]
@@ -81,7 +81,7 @@ flowchart TD
         Gateway -->|final_report| Slack([Slack Webhook])
     end
 
-    subgraph Proof Layer — offline, no infra needed
+    subgraph "Proof Layer - offline, no infra needed"
         Eval[eval.run_eval] -->|injects fixtures| Loop
         Eval --> Judge[LLM Judge<br/>closed-vocab + rubric]
         Judge --> Scorecard[Scorecard:<br/>accuracy, variance, cost]
