@@ -31,10 +31,10 @@ dashboards":
   agent against injected incidents with known root causes and deliberate red
   herrings, scored by an LLM judge against a closed vocabulary — the same
   category of evaluation OpenSRE itself uses, not vibes.
-- **It's self-improving.** Every resolved incident writes back a memory *and*
-  creates a new SigNoz guard alert on the leading signal that would have
-  caught it earlier. The system you're running against has better alert
-  coverage after every incident than before it.
+- **It learns.** Every resolved incident is written back to memory, so the next
+  occurrence of the same failure is recognised instantly instead of
+  re-investigated from scratch — and each report recommends the specific guard
+  alert that would have caught this incident earlier.
 
 ---
 
@@ -52,13 +52,13 @@ Node.js Gateway ──▶ RabbitMQ ──▶ Python Agent (direct tool-calling l
                   traces/logs/metrics)
                                        │
                          ┌─────────────┴─────────────┐
-                    Evidence-backed RCA      Guard alert created
-                    (Root Cause · Confidence  in SigNoz (self-improving)
-                     · Evidence · Remediation
+                    Evidence-backed RCA        Incident saved to memory
+                    (Root Cause · Confidence   (recognised instantly
+                     · Evidence · Remediation    next time)
                      · Prevention)
                                        │
                                        ▼
-                  Redis pub/sub ──▶ Next.js live dashboard + Slack
+              Redis pub/sub ──▶ Next.js live dashboard  +  Slack / Telegram
 ```
 
 1. **Sanitize** — PII (emails, IPs, phone numbers, SSNs) is masked out of the
@@ -72,11 +72,12 @@ Node.js Gateway ──▶ RabbitMQ ──▶ Python Agent (direct tool-calling l
 3. **Report** — a structured Markdown RCA (Root Cause, Confidence, Evidence,
    Remediation, Prevention), every claim traceable to a tool call the agent
    actually made, with clickable deep-links back into the SigNoz UI.
-4. **Close the loop** — the agent creates a new SigNoz alert on the leading
-   indicator of the failure, and saves the resolution to memory so the next
-   occurrence is instant.
-5. **Stream** — every step (`thinking`, `tool_call`, `final_report`, `cost`)
-   is pushed live to a real-time dashboard and, on conclusion, to Slack.
+4. **Close the loop** — the agent saves the resolution to memory so the next
+   occurrence is instant, and recommends the specific guard alert (name +
+   condition) that would have caught this failure earlier.
+5. **Deliver** — every step (`thinking`, `tool_call`, `final_report`, `cost`)
+   is streamed to a live dashboard, and the finished report is posted to
+   Slack or Telegram so nobody has to go looking for it.
 
 ---
 
@@ -117,7 +118,7 @@ and the honest caveat on the one sub-100% metric: [ARCHITECTURE.md §5](ARCHITEC
 ## Capabilities
 
 - **Direct tool-calling investigation loop** — no graph/chain framework;
-  the LLM freely picks from 10 tools across Observability and Knowledge.
+  the LLM freely picks from 9 tools across Observability and Knowledge.
 - **Real SigNoz MCP integration** — genuine `stdio` protocol handshake against
   the official SigNoz MCP server, correct tool names/params (not guessed),
   with a labeled `MOCK`-fallback for demo resilience if SigNoz is unreachable.
@@ -125,8 +126,10 @@ and the honest caveat on the one sub-100% metric: [ARCHITECTURE.md §5](ARCHITEC
   from scratch.
 - **Incident memory** — recalls similar past incidents; every resolution is
   saved for next time.
-- **Self-improving** — creates a new SigNoz guard alert on the leading signal
-  of every incident it resolves.
+- **Prevention guidance** — every report names the specific guard alert
+  (signal + threshold) that would have caught the incident earlier.
+- **Report delivery** — the finished RCA is posted to Slack or Telegram, with
+  clickable SigNoz links, so the on-call engineer never leaves their channel.
 - **Evidence-backed, hallucination-resistant** — every claim must cite a real
   tool result; mocked evidence is explicitly labeled, never silently trusted.
 - **PII masking** — alert payloads are sanitized before touching an external
@@ -146,15 +149,15 @@ and the honest caveat on the one sub-100% metric: [ARCHITECTURE.md §5](ARCHITEC
 A four-layer system — full breakdown in [**ARCHITECTURE.md**](ARCHITECTURE.md):
 
 1. **Command Center** (`frontend-mission-control/`) — Next.js + Tailwind.
-   Live reasoning stream, evidence chain, self-improving Prevention card,
+   Live reasoning stream, evidence chain, Prevention card,
    SigNoz deep-links, one-click demo trigger.
 2. **Gateway** (`gateway-node/`) — Node.js, Express, Socket.io, RabbitMQ,
    Redis. Catches SigNoz webhooks, queues durably, bridges Redis pub/sub to
    WebSocket clients, delivers to Slack.
 3. **Brain** (`agent-python/`) — Python. The OpenSRE-style direct
-   tool-calling loop. Consumes from RabbitMQ, sanitizes PII, investigates via
-   real SigNoz MCP + local Knowledge/Memory, closes the loop by creating
-   alerts.
+   tool-calling loop, plus the `overwatch` CLI. Consumes from RabbitMQ,
+   sanitizes PII, investigates via real SigNoz MCP + local Knowledge/Memory,
+   saves the resolution to memory and delivers the report onward.
 4. **Proof Layer** (`agent-python/eval/`) — the benchmark. Runs independently
    of the other three layers — no infra needed, just an LLM key.
 
@@ -235,11 +238,11 @@ truth, in the report or in the benchmark.
 
 | Criterion | How Over-Watch addresses it |
 |---|---|
-| **Potential Impact** | Automates the first ~45 minutes of incident investigation; the self-improving loop compounds that value by permanently improving alert coverage. |
-| **Creativity & Innovation** | Writes back to SigNoz (new alerts) and to its own memory — not just a read-only chatbot; the benchmark itself is a differentiator most entries in this track won't have. |
-| **Technical Excellence** | Real MCP protocol with correct tool names, a documented Docker-networking fix, retry/backoff resilience, model-family-aware API calls, and a variance-checked benchmark. |
-| **Best Use of SigNoz** | Every observability call goes through the genuine SigNoz MCP server; the agent both reads (traces/logs/metrics/alerts) and writes (`signoz_create_alert`) to SigNoz. |
-| **User Experience** | Real-time reasoning stream, evidence with clickable SigNoz deep-links, a self-improving Prevention card, Slack delivery, one-click reliable demo. |
+| **Potential Impact** | Automates the first ~45 minutes of incident investigation; incident memory compounds that value — a repeat failure is recognised instead of re-investigated. |
+| **Creativity & Innovation** | Not a read-only chatbot: it consults runbooks and past incidents, recommends the guard alert that would have caught the failure earlier, and delivers to Slack/Telegram. The quantified benchmark is itself a differentiator most entries in this track won't have. |
+| **Technical Excellence** | Real MCP protocol with correct tool names, a documented Docker-networking fix, retry/backoff resilience, model-family-aware API calls, ASCII-safe cross-platform CLI, and a variance-checked benchmark. |
+| **Best Use of SigNoz** | Every observability call goes through the genuine SigNoz MCP server over stdio — real tool names and parameters, verified against a live SigNoz Cloud instance with traces, logs and metrics from a two-service demo. |
+| **User Experience** | One `overwatch` command with an interactive menu and a `doctor` that explains exactly what's broken; real-time reasoning stream, evidence with clickable SigNoz deep-links, Prevention card, Slack delivery. |
 | **Presentation Quality** | This README, [ARCHITECTURE.md](ARCHITECTURE.md), and [SETUP-LIVE.md](SETUP-LIVE.md) mean every claim here is independently reproducible, not just asserted. |
 
 ---

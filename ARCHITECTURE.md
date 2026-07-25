@@ -34,11 +34,20 @@ works rather than what looks impressive:
    benchmark (§5) because unproven capability is not a differentiator in a
    crowded "SRE sidekick" hackathon track.
 
-3. **Self-improving, not just read-only.** Most "AI observability copilot"
-   entries only *read* telemetry. Over-Watch closes the loop: every resolved
-   incident writes back a memory AND creates a new SigNoz guard alert on the
-   leading signal that would have caught it earlier (§2.2, §6). The
-   observability system is measurably better after every incident than before.
+3. **Closes the loop, not just reads.** Most "AI observability copilot" entries
+   stop at printing an answer. Over-Watch writes every resolved incident back
+   to memory (so a repeat failure is recognised, not re-investigated),
+   recommends the specific guard alert that would have caught it earlier, and
+   delivers the finished report to Slack/Telegram — the same
+   investigate-then-deliver shape OpenSRE uses (§2.2, §6).
+
+   > We originally had the agent *create* the SigNoz alert itself via
+   > `signoz_create_alert`. The real tool requires a full Query-Builder v5 rule
+   > definition plus a pre-existing notification channel, which an LLM composes
+   > unreliably — and our code recorded "created" the moment the tool was
+   > called, so a failed creation still appeared successful. Rather than ship a
+   > claim we couldn't stand behind, the step became an explicit
+   > *recommendation* in the report. See §6.
 
 ---
 
@@ -62,7 +71,7 @@ flowchart TD
         Mask --> Loop[Investigator<br/>direct tool-calling loop]
         Loop <-->|stdio, real tool names| MCP[SigNoz MCP Server<br/>docker/binary subprocess]
         Loop <-->|search / recall / save| Knowledge[(Knowledge & Memory<br/>runbooks + incidents.json)]
-        Loop -->|signoz_create_alert| MCP
+        Loop -->|Slack / Telegram| Notify([Report delivery])
         Loop -->|emit every step| Redis[(Redis Pub/Sub<br/>agent_updates)]
     end
 
@@ -84,9 +93,9 @@ flowchart TD
    intake, Redis→WebSocket bridge, Slack delivery.
 2. **Brain (`agent-python/`)** — the autonomous investigator. A single
    tool-calling loop over two tool domains (Observability + Knowledge) that
-   closes the loop by creating alerts and saving memory.
+   saves each resolution to memory and delivers the report onward.
 3. **Command Center (`frontend-mission-control/`)** — live dashboard into the
-   agent's reasoning, evidence, and self-improving actions.
+   agent's reasoning, evidence, and prevention guidance.
 4. **Proof Layer (`agent-python/eval/`)** — the benchmark that turns "trust us"
    into a number. Runs independently of the other three layers; needs only an
    LLM key, no SigNoz/Docker/RabbitMQ.
@@ -112,7 +121,7 @@ loop up to MAX_ITERATIONS (12):
         continue
     else:  # model produced a final answer, no more tool calls
         parse the Markdown into a structured report
-        attach SigNoz deep-links + any alerts the agent created
+        attach SigNoz deep-links, then deliver to Slack/Telegram
         emit "final_report", emit "cost"
         return report
 ```
@@ -136,10 +145,10 @@ Key implementation details:
   model family and the loop omits `temperature` for those models instead of
   crashing — verified against `gpt-4o`, `gpt-4.1`, `gpt-5.3-codex`, `o1`,
   `o3-mini`, `o4`.
-- **Self-improving finalize step (`_finalize`).** Once the model stops calling
-  tools, before returning: attach `signoz_links` (deep links built from every
-  trace ID/service cited in the report — §2.5) and `created_alerts` (any
-  `signoz_create_alert` calls the agent made during the investigation).
+- **Finalize + deliver.** Once the model stops calling tools, `_finalize`
+  attaches `signoz_links` (deep links built from every trace ID/service cited
+  in the report — §2.5), then `_deliver` posts the report to Slack/Telegram if
+  configured (§6) and emits a `status` event naming the channels it reached.
 
 ### 2.2 The System Prompt (`agent/prompts.py`)
 
@@ -156,9 +165,10 @@ is what makes the agent behave like a senior SRE instead of a keyword-matcher:
    actually observed (trace ID, log line + timestamp, metric value) —
    explicit anti-hallucination instruction, and MOCK-sourced data must be
    labeled as such in the report.
-4. **Close the loop before finishing**: call `save_incident_memory` AND
-   `signoz_create_alert` — the alert must target the *leading* signal (e.g.
-   "pool nearing saturation") not a duplicate of the alert that already fired.
+4. **Close the loop before finishing**: call `save_incident_memory` so the next
+   occurrence is recognised instantly, and recommend a guard alert in the
+   Prevention section targeting the *leading* signal (e.g. "pool nearing
+   saturation") — not a duplicate of the alert that already fired.
 5. **Final report is a fixed 5-section Markdown template** — Root Cause,
    Confidence, Evidence, Recommended Remediation, Prevention — parsed
    deterministically by `_parse_report()` via section-heading regex, with
@@ -168,16 +178,16 @@ is what makes the agent behave like a senior SRE instead of a keyword-matcher:
 
 ### 2.3 Tool Registry (`agent/tools.py`)
 
-A single flat list of **10 tools** presented to the LLM, split into two
+A single flat list of **9 tools** presented to the LLM, split into two
 families the dispatcher routes independently:
 
 | Family | Tools | Backend |
 |---|---|---|
-| `observability` | `signoz_list_services`, `signoz_search_traces`, `signoz_get_trace_details`, `signoz_search_logs`, `signoz_query_metrics`, `signoz_list_alerts`, `signoz_create_alert` | SigNoz MCP session |
+| `observability` | `signoz_list_services`, `signoz_search_traces`, `signoz_get_trace_details`, `signoz_search_logs`, `signoz_query_metrics`, `signoz_list_alerts` | SigNoz MCP session |
 | `knowledge` | `search_runbooks`, `recall_similar_incidents`, `save_incident_memory` | Local `KnowledgeStore` |
 
 `dispatch(name, arguments, signoz_session, knowledge)` is the single async
-entrypoint every tool call goes through — verified offline that all 10 tools
+entrypoint every tool call goes through — verified offline that all 9 tools
 are unique, every tool classifies into exactly one family, and the
 observability schema names match the MCP client's real tool set exactly (no
 drift between what's advertised to the LLM and what's dispatchable).
@@ -207,8 +217,8 @@ documented parameter schemas, not guessed):
 - `signoz_query_metrics(metricName, timeAggregation, spaceAggregation, filter, timeRange)`
 - `signoz_list_alerts(active, limit)`
 - `signoz_get_trace_details(traceId)`
-- `signoz_create_alert(name, description, service, condition, severity)` — the
-  self-improving tool (§6)
+(`signoz_create_alert` exists on the server but is deliberately not exposed to
+the agent — see §0 and §6.)
 
 **Docker networking fix.** From *inside* the spawned MCP container,
 `localhost` refers to the container itself, not the host — a subtle failure
@@ -331,7 +341,7 @@ Next.js App Router + Tailwind CSS.
   - **🛡️ Prevention · Self-Improving card** — renders the agent's Prevention
     section text plus each guard alert it created (`created_alerts[]`, with
     name + condition), visually distinct (green) from the rest of the report
-    so judges can see the self-improving loop closing in real time
+    so the prevention guidance is visible at a glance
   - **Open in SigNoz** — clickable deep-link buttons from `signoz_links[]`
 - **Simulate Alert button** — bypasses SigNoz entirely, POSTs a synthetic
   alert straight to the Gateway webhook, for a 100%-reliable live demo path.
@@ -459,32 +469,45 @@ here — it means this isn't a lucky single run.
 
 ---
 
-## 6. Self-Improving Observability — How the Loop Actually Closes
+## 6. Closing the Loop — Memory, Prevention, Delivery
 
-This is the mechanism, end to end, tying together §2.1, §2.2, §2.4, and §4.1:
+An investigation that ends at a printed answer wastes most of its value. Three
+mechanisms carry it forward, tying together §2.1, §2.2, §2.6 and §4.1:
 
-1. The prompt (§2.2) instructs the agent, once confident, to call
-   `signoz_create_alert(name, description, service, condition, severity)` —
-   targeting the **leading indicator** of the failure it just diagnosed (e.g.
-   "connection_pool_active >= 18 for 2m," not a copy of the alert that already
-   fired at threshold).
-2. `_run_tool_calls` in `agent/loop.py` intercepts every `signoz_create_alert`
-   call and appends it to `self._created_alerts`, independent of whatever the
-   MCP server/mock returns.
-3. `_finalize()` attaches `created_alerts` to the report.
-4. The report parser extracts a dedicated **Prevention** Markdown section
-   (`_section(md, "Prevention")`) — verified to parse correctly against a full
-   5-section report.
-5. The dashboard (§4.1) renders both as a distinct green **🛡️ Prevention ·
-   Self-Improving** card.
-6. Simultaneously, `save_incident_memory` writes the resolution into
-   `knowledge/memory/incidents.json`, so `recall_similar_incidents` on the
-   *next* investigation of the same failure mode short-circuits the reasoning.
+**1. Memory — the genuinely self-improving part.**
+`save_incident_memory` writes the resolution into
+`knowledge/memory/incidents.json`. On the *next* investigation of the same
+failure mode, `recall_similar_incidents` surfaces it in the agent's first tool
+call and short-circuits the reasoning. This is measurable: a repeat live
+investigation of the same incident dropped from **10 LLM calls to 4**, and from
+**$0.10 to $0.067**, once memory contained the prior resolution.
 
-Net effect: the SigNoz instance the agent runs against has **more and better
-alert coverage after every incident than before it** — the pitch is not "an
-AI that reads your dashboards" but "an AI that makes your dashboards better
-every time something breaks."
+**2. Prevention — a recommendation, honestly labelled.**
+The prompt requires a **Prevention** section naming the guard alert (name +
+condition + why) on the *leading* signal that would have caught this failure
+earlier — e.g. "connection_pool_active >= 18 for 2m," not a duplicate of the
+alert that already fired. `_parse_report` extracts it via
+`_section(md, "Prevention")`, and the dashboard (§4.1) renders it as a distinct
+green **Prevention · Recommended Guard Alert** card.
+
+> **Why recommend, not create?** We first had the agent call
+> `signoz_create_alert` directly. Inspecting the real tool's schema (via
+> `signoz_mcp/inspect.py`) showed why that was fragile: it requires a full
+> Query-Builder v5 `compositeQuery`, a `thresholds` spec, and *at least one
+> pre-existing notification channel* — a payload an LLM composes unreliably. It
+> also failed silently: our code recorded the alert as "created" the moment the
+> tool was called, so a rejected creation still showed as success in the
+> report. Presenting a recommendation the engineer applies is the claim we can
+> actually stand behind.
+
+**3. Delivery — the report reaches the human (`agent/notify.py`).**
+`_deliver` posts the finished RCA to **Slack** (Block Kit, colour-coded by
+confidence) and/or **Telegram**, including the evidence chain, the prevention
+recommendation, and clickable SigNoz deep-links. Configured entirely by env
+(`SLACK_WEBHOOK_URL`, `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`) and a silent
+no-op when unset, so the agent runs identically with or without it. This
+mirrors OpenSRE's final step: the on-call engineer never has to go looking for
+the answer.
 
 ---
 
@@ -513,9 +536,9 @@ webhook→dashboard pipeline end to end.
 
 | Criterion | How this architecture addresses it |
 |---|---|
-| **Potential Impact** | Automates the first ~45 minutes of incident investigation; the self-improving loop (§6) compounds that value over time by permanently improving alert coverage. |
+| **Potential Impact** | Automates the first ~45 minutes of incident investigation; incident memory (§6) compounds that value — a repeat failure resolved in 4 LLM calls instead of 10. |
 | **Creativity & Innovation** | Not just "SigNoz + LLM chat" — the agent *writes back* to SigNoz (new alerts) and to its own memory, and the benchmark (§5) is itself a novel proof mechanism most entries in this track won't have. |
 | **Technical Excellence** | Real MCP protocol (not guessed tool names), a documented and fixed Docker-networking failure mode, retry/backoff resilience, model-family-aware API calls, and — the strongest evidence — a variance-checked benchmark, not just "it ran once." |
-| **Best Use of SigNoz** | Every observability tool call goes through the genuine SigNoz MCP server with correct tool names/params (§2.4); the agent both reads (traces/logs/metrics/alerts) and writes (`signoz_create_alert`) to SigNoz. |
-| **User Experience** | Real-time reasoning stream, evidence chain with clickable SigNoz deep-links, a distinct self-improving Prevention card, Slack delivery, and a one-click reliable demo trigger. |
+| **Best Use of SigNoz** | Every observability tool call goes through the genuine SigNoz MCP server over stdio with correct tool names/params (§2.4), verified against a live SigNoz Cloud instance using traces, logs and metrics from a two-service demo. |
+| **User Experience** | One `overwatch` command with an interactive menu and a `doctor` that names the exact fix for every broken check; real-time reasoning stream, evidence chain with clickable SigNoz deep-links, Prevention card, Slack delivery, one-click demo trigger. |
 | **Presentation Quality** | This document + `SETUP-LIVE.md` + the reproducible `--trials 3` scorecard mean the claims in the demo are independently checkable, not just asserted. |
