@@ -105,7 +105,7 @@ Reproduce it yourself:
 ```bash
 cd agent-python
 uv sync
-uv run python -m eval.run_eval --trials 3
+uv run overwatch eval --trials 3
 ```
 
 No SigNoz, no Docker, no RabbitMQ required — each scenario ships its own
@@ -180,9 +180,12 @@ cd agent-python
 docker pull signoz/signoz-mcp-server:latest   # the agent spawns this over stdio
 cp .env.example .env                          # set OPENAI_API_KEY, SIGNOZ_URL, SIGNOZ_API_KEY
 uv sync
-uv run python -m signoz_mcp.smoke             # preflight: confirm SigNoz MCP is reachable
-uv run python main.py                         # listens on RabbitMQ incidents_queue
+uv run overwatch doctor --deep                # preflight: verify the whole setup
+uv run overwatch worker                       # listens on RabbitMQ incidents_queue
 ```
+
+Everything runs through one command — `uv run overwatch` for an interactive
+menu, or `overwatch doctor | eval | demo | worker | guide` directly.
 If SigNoz/MCP is unreachable it falls back to labeled `MOCK` data so a demo
 never hard-crashes. For real telemetry end-to-end, see
 [**SETUP-LIVE.md**](SETUP-LIVE.md). Agent internals: [agent-python/README.md](agent-python/README.md).
@@ -197,7 +200,7 @@ npm run dev
 ### 5. Run the benchmark (no infra needed)
 ```bash
 cd agent-python
-uv run python -m eval.run_eval --trials 3
+uv run overwatch eval --trials 3
 ```
 
 ---
@@ -213,7 +216,7 @@ uv run python -m eval.run_eval --trials 3
    SigNoz deep-links), Remediation — and a distinct **🛡️ Prevention** card
    showing the guard alert the agent just created in SigNoz.
 6. (Optional) The same report lands in Slack.
-7. Cut to the benchmark scorecard — `uv run python -m eval.run_eval --trials 3` —
+7. Cut to the benchmark scorecard — `uv run overwatch eval --trials 3` —
    for the proof this isn't a one-off.
 
 ---

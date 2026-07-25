@@ -229,7 +229,7 @@ dashboard status banner — so mocked evidence is never silently mistaken for
 real telemetry, in the UI or in the benchmark.
 
 **Preflight smoke test (`signoz_mcp/smoke.py`).** Before trusting a `--live`
-benchmark run or a demo, `uv run python -m signoz_mcp.smoke` spawns the MCP
+benchmark run or a demo, `uv run overwatch doctor --deep` spawns the MCP
 server, confirms the handshake, lists the tools actually available, and
 executes one real `signoz_list_services` call — exits 0 if genuinely
 connected, 1 (with a targeted checklist) if it fell back to mock. This exists
@@ -431,12 +431,12 @@ out 429s via `Retry-After` automatically.
 
 **CLI:**
 ```bash
-uv run python -m eval.run_eval --list          # scenario ids, no LLM
-uv run python -m eval.run_eval --dry-run        # validate fixtures+scorer, no LLM
-uv run python -m eval.run_eval --trials 3       # the real benchmark + variance
-uv run python -m eval.run_eval --no-judge       # keyword-only scoring
-uv run python -m eval.run_eval --live           # investigate real SigNoz instead of fixtures
-uv run python -m eval.run_eval --pace 8         # more headroom for low-TPM API tiers
+uv run overwatch eval --list          # scenario ids, no LLM
+uv run overwatch eval --dry-run        # validate fixtures+scorer, no LLM
+uv run overwatch eval --trials 3       # the real benchmark + variance
+uv run overwatch eval --no-judge       # keyword-only scoring
+uv run overwatch eval --live           # investigate real SigNoz instead of fixtures
+uv run overwatch eval --pace 8         # more headroom for low-TPM API tiers
 ```
 
 ### 5.7 Actual Measured Result
