@@ -193,14 +193,21 @@ If SigNoz/MCP is unreachable it falls back to labeled `MOCK` data so a demo
 never hard-crashes. For real telemetry end-to-end, see
 [**SETUP-LIVE.md**](SETUP-LIVE.md). Agent internals: [agent-python/README.md](agent-python/README.md).
 
-### 4. Command Center (Next.js) — :3000
+### 4. Demo app (generates real telemetry to investigate)
+```bash
+cd agent-python
+uv sync --group demo
+python demo/sample_app.py     # exports traces + logs to SigNoz as it runs
+```
+
+### 5. Command Center (Next.js) — :3000
 ```bash
 cd frontend-mission-control
 npm install
 npm run dev
 ```
 
-### 5. Run the benchmark (no infra needed)
+### 6. Run the benchmark (no infra needed)
 ```bash
 cd agent-python
 uv run overwatch eval --trials 3
@@ -217,7 +224,8 @@ uv run overwatch eval --trials 3
    SigNoz live — streamed step-by-step in the reasoning console.
 5. The final RCA renders: Root Cause, Confidence, Evidence (with clickable
    SigNoz deep-links), Remediation — and a distinct **🛡️ Prevention** card
-   showing the guard alert the agent just created in SigNoz.
+   recommending the specific guard alert (signal + threshold) that would have
+   caught this incident earlier.
 6. (Optional) The same report lands in Slack.
 7. Cut to the benchmark scorecard — `uv run overwatch eval --trials 3` —
    for the proof this isn't a one-off.
@@ -251,6 +259,7 @@ truth, in the report or in the benchmark.
 
 - [**ARCHITECTURE.md**](ARCHITECTURE.md) — full component-by-component system design, design decisions, and the benchmark methodology.
 - [**SETUP-LIVE.md**](SETUP-LIVE.md) — stand up self-hosted SigNoz, generate real telemetry, and run against live data end-to-end.
+- [**casting.yaml**](casting.yaml) / [**casting.yaml.lock**](casting.yaml.lock) — the Foundry deployment spec and resolved lock file used to self-host SigNoz during development, included for reproducibility.
 - [**agent-python/README.md**](agent-python/README.md) — the agent brain: loop, tools, SigNoz MCP client, knowledge layer, and benchmark CLI reference.
 
 ## License
