@@ -1,26 +1,130 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+  Over-Watch Mission Control
+  --------------------------
+  An instrument panel, not a marketing page. The palette is borrowed from
+  operations rooms rather than dashboards: a deep ink base with warm signal
+  amber for "work in progress" (the caution light), and cool cyan reserved
+  strictly for telemetry. Colour always means something here - it is never
+  decoration.
+*/
+
+@theme {
+  /* Surfaces - ink, slightly blue, never pure black */
+  --color-void: #0a0e14;
+  --color-deck: #121822;
+  --color-deck-2: #182030;
+  --color-rule: #1f2833;
+  --color-rule-bright: #2c3848;
+
+  /* Text. ink-3 carries the 10-11px legends, so it is set at 5.3:1 rather
+     than the dimmer grey the look would otherwise invite - small type needs
+     more contrast, not less. */
+  --color-ink-1: #c9d1d9; /* 12.5:1 */
+  --color-ink-2: #8b97a8; /*  6.5:1 */
+  --color-ink-3: #7b8798; /*  5.3:1 */
+
+  /* Signals - each one carries a fixed meaning */
+  --color-signal: #ffb454; /* agent working / attention */
+  --color-trace: #56b6c2; /* telemetry, observability calls */
+  --color-recall: #b48ead; /* knowledge + memory calls */
+  --color-fault: #f26d6d; /* incident, error, low confidence */
+  --color-nominal: #7ee787; /* resolved, high confidence */
+
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-void);
+  color: var(--color-ink-1);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Micro-labels: the printed legends on an instrument panel. */
+.legend {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+
+/* Tabular figures everywhere numbers change in place, so nothing jitters. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Quality floor: always-visible keyboard focus. */
+:focus-visible {
+  outline: 2px solid var(--color-signal);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Scrollbars that read as part of the instrument, not the OS. */
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-rule-bright) transparent;
+}
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: var(--color-rule-bright);
+  border-radius: 4px;
+}
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/*
+  Motion. Two ambient cues only - a pulse on the live status dot and a short
+  entry for new trace rows. Both exist to answer "is this still running?",
+  which is the one question the page must always answer at a glance.
+*/
+@keyframes ow-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.pulse {
+  animation: ow-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes ow-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.enter {
+  animation: ow-enter 220ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
