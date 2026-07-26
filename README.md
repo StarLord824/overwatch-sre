@@ -101,8 +101,8 @@ command):
 | RCA accuracy | **100%** (5/5) — mean **100% ± 0pp** across 3 trials |
 | Red-herring resistance | **100%** — never fooled by a planted distractor, any trial |
 | Rubric score | **100%** — every judge-graded scoring point satisfied |
-| Cost per incident | **~$0.05** |
-| LLM calls per incident | **~7** |
+| Cost per incident | **~$0.04** |
+| LLM calls per incident | **~6** |
 
 Zero variance across trials is the point — this isn't a lucky single run.
 Reproduce it yourself:
@@ -116,6 +116,13 @@ uv run overwatch eval --trials 3
 No SigNoz, no Docker, no RabbitMQ required — each scenario ships its own
 telemetry fixtures; only an LLM key is needed. Full methodology, scenario list,
 and the honest caveat on the one sub-100% metric: [ARCHITECTURE.md §5](ARCHITECTURE.md#5-the-proof-layer-agent-pythoneval).
+
+Prefer to just look? The 5 incident fixtures (full injected telemetry, red
+herrings, and judge rubric) live in
+[`agent-python/eval/scenarios.py`](agent-python/eval/scenarios.py), and the
+actual output of the last real run — per-scenario judge reasoning, cost,
+evidence recall — is committed at
+[`agent-python/eval/last_scorecard.json`](agent-python/eval/last_scorecard.json).
 
 ---
 
