@@ -1,5 +1,6 @@
 const express = require('express');
 const http = require('http');
+const cors = require('cors');
 const { Server } = require('socket.io');
 const dotenv = require('dotenv');
 
@@ -7,6 +8,11 @@ dotenv.config();
 
 // Initialize Express & Socket.io
 const app = express();
+// The Socket.io CORS block below only covers the websocket handshake - the
+// plain REST routes (e.g. the dashboard's "Simulate Alert" POST) need their
+// own CORS headers or the browser blocks the request before it ever reaches
+// the webhook handler.
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 const server = http.createServer(app);
 const io = new Server(server, {

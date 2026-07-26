@@ -1,11 +1,26 @@
 "use client";
 
+import { Fragment } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { Report, SigNozLink, confidenceColor } from "../lib/events";
 
 interface Props {
   report: Report | null;
   running: boolean;
+}
+
+/**
+ * The agent writes free-text report fields itself, and occasionally reaches
+ * for markdown bold (** or __) without anywhere to render it - this renders
+ * just that one construct so it doesn't show up as literal asterisks.
+ */
+function withBold(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*|__[^_]+__)/g);
+  return parts.map((part, i) => {
+    const bold = part.match(/^\*\*([^*]+)\*\*$|^__([^_]+)__$/);
+    if (!bold) return <Fragment key={i}>{part}</Fragment>;
+    return <strong key={i}>{bold[1] ?? bold[2]}</strong>;
+  });
 }
 
 function Block({
@@ -67,14 +82,14 @@ export default function VerdictPanel({ report, running }: Props) {
 
             <Block label="Root cause">
               <p className="text-[14px] leading-relaxed text-ink-1">
-                {report.root_cause}
+                {withBold(report.root_cause)}
               </p>
             </Block>
 
             {report.summary && (
               <Block label="Remediation">
                 <p className="whitespace-pre-line text-[13px] leading-relaxed text-ink-2">
-                  {report.summary}
+                  {withBold(report.summary)}
                 </p>
               </Block>
             )}
@@ -91,7 +106,7 @@ export default function VerdictPanel({ report, running }: Props) {
                         {String(i + 1).padStart(2, "0")}
                       </span>
                       <span className="break-words font-mono text-[11px] leading-relaxed text-ink-2">
-                        {item}
+                        {withBold(item)}
                       </span>
                     </li>
                   ))}
@@ -102,7 +117,7 @@ export default function VerdictPanel({ report, running }: Props) {
             {report.prevention && (
               <Block label="Prevention · recommended guard alert">
                 <p className="whitespace-pre-line border-l-2 border-nominal bg-nominal/5 px-3 py-2.5 text-[13px] leading-relaxed text-ink-1">
-                  {report.prevention}
+                  {withBold(report.prevention)}
                 </p>
               </Block>
             )}

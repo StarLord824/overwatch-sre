@@ -8,6 +8,10 @@ Built for [**Agents of SigNoz**](https://www.wemakedevs.org/hackathons/signoz)
 
 [Architecture Deep-Dive](ARCHITECTURE.md) · [Live SigNoz Setup](SETUP-LIVE.md) · [Agent Internals](agent-python/README.md)
 
+![Over-Watch dashboard mid-investigation: trace waterfall on the left, HIGH-confidence verdict with cited SigNoz evidence on the right](docs/assets/dashboard-hero.png)
+
+*A real run against live SigNoz Cloud telemetry — not a mock. Every evidence item links back to the actual trace.*
+
 ---
 
 ## Why Over-Watch?
