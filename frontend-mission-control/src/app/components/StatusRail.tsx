@@ -5,6 +5,9 @@ import { CostSummary, formatMET } from "../lib/events";
 interface Props {
   connected: boolean;
   incidentId: string | null;
+  /** Wall-clock time the current run started, e.g. "14:32:07" - T+MM:SS
+   *  alone can't answer "when did this actually happen". */
+  startedAt: string | null;
   met: number | null;
   running: boolean;
   cost: CostSummary | null;
@@ -36,6 +39,7 @@ function Readout({
 export default function StatusRail({
   connected,
   incidentId,
+  startedAt,
   met,
   running,
   cost,
@@ -83,8 +87,17 @@ export default function StatusRail({
         </Readout>
 
         <Readout label="Elapsed" width="92px">
-          <span className={running ? "text-signal" : "text-ink-1"}>
+          <span
+            className={running ? "text-signal" : "text-ink-1"}
+            title={startedAt ? `Started ${startedAt}` : undefined}
+          >
             {met === null ? "T+00:00.0" : formatMET(met)}
+          </span>
+        </Readout>
+
+        <Readout label="Started" width="76px">
+          <span className={startedAt ? "text-ink-1" : "text-ink-3"}>
+            {startedAt ?? "--"}
           </span>
         </Readout>
 

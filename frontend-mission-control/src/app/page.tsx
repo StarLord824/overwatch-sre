@@ -48,7 +48,19 @@ export default function MissionControl() {
     socket.on("connect", () => setConnected(true));
     socket.on("disconnect", () => setConnected(false));
     socket.on("agent_event", (evt: Omit<AgentEvent, "receivedAt">) => {
-      setEvents((prev) => [...prev, { ...evt, receivedAt: Date.now() }]);
+      setEvents((prev) => {
+        // A run can arrive from anywhere - the dashboard's own button, the
+        // CLI's `overwatch demo`, a real SigNoz webhook - and since events
+        // now persist across reloads, an unrelated new incident must start a
+        // fresh trace rather than append onto whatever was left over, or the
+        // waterfall mixes runs and the verdict below picks up a stale report.
+        const current = prev[prev.length - 1]?.incident_id;
+        const isNewIncident = Boolean(
+          evt.incident_id && current && evt.incident_id !== current,
+        );
+        const base = isNewIncident ? [] : prev;
+        return [...base, { ...evt, receivedAt: Date.now() }];
+      });
     });
 
     return () => {
@@ -74,9 +86,12 @@ export default function MissionControl() {
   );
 
   // Derived run state -------------------------------------------------------
+  // findLast, not find: defensive belt-and-suspenders in case a stray retry
+  // ever puts two of the same event type in one incident's array - the most
+  // recent one is always the one that should win.
   const report = useMemo(
     () =>
-      (events.find((e) => e.type === "final_report")?.data as
+      (events.findLast((e) => e.type === "final_report")?.data as
         | Report
         | undefined) ?? null,
     [events],
@@ -84,8 +99,9 @@ export default function MissionControl() {
 
   const cost = useMemo(
     () =>
-      (events.find((e) => e.type === "cost")?.data as CostSummary | undefined) ??
-      null,
+      (events.findLast((e) => e.type === "cost")?.data as
+        | CostSummary
+        | undefined) ?? null,
     [events],
   );
 
@@ -103,6 +119,15 @@ export default function MissionControl() {
 
   const t0 = events.length ? events[0].receivedAt : null;
   const running = events.length > 0 && !report;
+
+  // T+MM:SS is deliberately relative (see TraceStream) - but that means it
+  // says nothing about *when* a persisted run actually happened, which
+  // matters once a run can survive a reload or a later look-back. This is
+  // the one absolute anchor for it.
+  const startedAt = useMemo(
+    () => (t0 !== null ? new Date(t0).toLocaleTimeString() : null),
+    [t0],
+  );
 
   // One ticker drives both the elapsed clock and the in-flight span duration.
   useEffect(() => {
@@ -151,6 +176,7 @@ export default function MissionControl() {
       <StatusRail
         connected={connected}
         incidentId={incidentId}
+        startedAt={startedAt}
         met={met}
         running={running}
         cost={cost}

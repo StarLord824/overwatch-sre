@@ -112,8 +112,13 @@ export default function TraceStream({ events, t0, running, now }: Props) {
 
               return (
                 <li key={i} className="enter relative flex gap-3 pb-5">
-                  {/* MET gutter */}
-                  <span className="w-[76px] shrink-0 pt-[3px] text-right font-mono text-[11px] tnum text-ink-3">
+                  {/* MET gutter - relative by design (see note above), but a
+                      hover reveals the actual wall-clock moment for anyone
+                      looking back at a persisted run later. */}
+                  <span
+                    className="w-[76px] shrink-0 pt-[3px] text-right font-mono text-[11px] tnum text-ink-3"
+                    title={new Date(evt.receivedAt).toLocaleTimeString()}
+                  >
                     {t0 !== null ? formatMET(evt.receivedAt - t0) : ""}
                   </span>
 
