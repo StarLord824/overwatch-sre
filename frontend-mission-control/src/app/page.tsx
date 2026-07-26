@@ -11,12 +11,35 @@ import { AgentEvent, CostSummary, Report } from "./lib/events";
 const GATEWAY =
   process.env.NEXT_PUBLIC_GATEWAY_URL || "http://localhost:4000";
 
+// The last run survives a reload via localStorage - there's no server-side
+// history endpoint, and losing an in-progress or just-finished investigation
+// to an accidental refresh is a worse experience than a stale one persisting
+// until the next "Simulate Alert".
+const STORAGE_KEY = "overwatch:lastRun";
+
 export default function MissionControl() {
+  // Starts empty so the client's first paint matches the server-rendered
+  // HTML (which can't see localStorage) - hydrating from storage happens in
+  // an effect below, after mount, as a normal post-hydration state update
+  // rather than a value baked into the initial render.
   const [events, setEvents] = useState<AgentEvent[]>([]);
   const [connected, setConnected] = useState(false);
-  const [incidentId, setIncidentId] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const socketRef = useRef<Socket | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      // useSyncExternalStore doesn't fit here - it wants the external source
+      // to stay authoritative every render, but `events` is owned by React
+      // and mutated continuously by the socket handler below; localStorage is
+      // only a one-time rehydration backup at mount, not a live source.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (raw) setEvents(JSON.parse(raw) as AgentEvent[]);
+    } catch {
+      // Corrupt or unavailable storage - starting empty is a fine fallback.
+    }
+  }, []);
 
   useEffect(() => {
     const socket = io(GATEWAY);
@@ -26,13 +49,29 @@ export default function MissionControl() {
     socket.on("disconnect", () => setConnected(false));
     socket.on("agent_event", (evt: Omit<AgentEvent, "receivedAt">) => {
       setEvents((prev) => [...prev, { ...evt, receivedAt: Date.now() }]);
-      if (evt.incident_id) setIncidentId(evt.incident_id);
     });
 
     return () => {
       socket.disconnect();
     };
   }, []);
+
+  useEffect(() => {
+    try {
+      if (events.length) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch {
+      // Storage full or unavailable - losing persistence isn't worth surfacing.
+    }
+  }, [events]);
+
+  const incidentId = useMemo(
+    () => events[events.length - 1]?.incident_id ?? null,
+    [events],
+  );
 
   // Derived run state -------------------------------------------------------
   const report = useMemo(
@@ -82,7 +121,6 @@ export default function MissionControl() {
 
   const simulate = useCallback(async () => {
     setEvents([]);
-    setIncidentId(null);
     setNow(Date.now());
     try {
       await fetch(`${GATEWAY}/api/webhooks/signoz`, {
